@@ -1,0 +1,201 @@
+:root{
+  --brand:#1976d2;
+  --brand-dark:#0d47a1;
+  --bg:#f4f4f4;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+  --nav-h: 56px;             /* navbar height */
+  --unit-pad: 16px;          /* inner padding of each unit */
+}
+
+*{ box-sizing: border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+  background:var(--bg);
+  color:#111827;
+  padding-top: calc(var(--nav-h) + 12px);  /* keep content below navbar */
+}
+
+/* Navbar */
+.navbar{
+  position:fixed;
+  top:0; left:0; right:0;
+  height:var(--nav-h);
+  background:var(--brand);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  color:#fff;
+  z-index:1000;
+  box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+.nav-item{ color:#fff; text-decoration:none; font-weight:700; }
+.nav-item:hover{ text-decoration:underline; }
+.nav-right{ display:flex; align-items:center; gap:8px; }
+
+.page-title{
+  margin: 8px auto 12px;
+  text-align:center;
+  color:var(--brand);
+  font-weight:800;
+}
+
+/* Days list */
+.days{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  padding: 0 10px 28px;
+}
+
+/* Each day (unit) — 3-column grid */
+.day{
+  display:grid;
+  grid-template-columns: 220px 1fr 420px; /* left / middle / right */
+  gap: 16px;
+  width: min(1600px, 98vw);
+  margin: 0 auto;
+  background: var(--card);
+  padding: var(--unit-pad);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  scroll-margin-top: calc(var(--nav-h) + 10px);
+}
+
+/* LEFT — Date & Week (sticky inside the unit) */
+.day-left{
+  align-self: start;
+  position: sticky;
+  top: calc(var(--nav-h) + 10px);  /* stick just under navbar */
+}
+.status{
+  line-height: 1.25;
+}
+.status-date{
+  font-size: 28px;        /* larger as requested */
+  font-weight: 800;
+  color:#0f172a;
+}
+.status-week{
+  margin-top: 4px;
+  font-size: 20px;        /* larger as requested */
+  font-weight: 600;
+  color:#334155;
+}
+
+/* MIDDLE — Photos grid */
+.day-middle{ align-self: start; }
+.photos{
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.photos img{
+  width:100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.photos img:hover{
+  transform: scale(1.03);
+  box-shadow: 0 8px 18px rgba(0,0,0,.18);
+}
+
+/* RIGHT — Comment panel (sticky inside the unit) */
+.day-right{
+  align-self: start;
+  position: sticky;
+  top: calc(var(--nav-h) + 10px);
+}
+.comment-section{
+  width: 100%;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.comment-header{
+  font-weight: 800;
+  color:#0f172a;
+}
+.preview{
+  padding: 12px;
+  background:#fafafa;
+  border:1px solid var(--border);
+  border-radius: 10px;
+  min-height: 180px;
+  font-size: 15px;
+  line-height: 1.55;
+  overflow:auto;
+}
+textarea{
+  width:100%;
+  min-height: 190px;
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border:1px solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 14px;
+  display:none; /* default: preview mode only */
+}
+.comment-actions{ display:flex; gap:8px; }
+.btn{
+  padding:6px 12px;
+  font-size:12px;       /* small buttons */
+  border:none;
+  border-radius: 8px;
+  background: var(--brand);
+  color:#fff;
+  cursor:pointer;
+}
+.btn:hover{ background: var(--brand-dark); }
+.btn-ghost{
+  padding:6px 10px;
+  font-size:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:#111827;
+}
+.btn-ghost:hover{ border-color:#c7cad1; }
+
+/* Lightbox */
+.lightbox{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,.82);
+  z-index:1200;
+}
+.lightbox img{
+  max-width: 92vw;
+  max-height: 92vh;
+  border-radius: 10px;
+}
+
+/* Week harmony colors */
+.week-color-1{ background-color:#fff7f7; }
+.week-color-2{ background-color:#f6fff9; }
+.week-color-3{ background-color:#f6fbff; }
+.week-color-4{ background-color:#fffdf4; }
+.week-color-5{ background-color:#fff6ff; }
+.week-color-6{ background-color:#f4ffff; }
+
+/* Responsive */
+@media (max-width: 1200px){
+  .day{ grid-template-columns: 200px 1fr 360px; }
+}
+@media (max-width: 980px){
+  .day{ grid-template-columns: 1fr; }
+  .day-left, .day-right{
+    position: static; /* stack on small screens */
+  }
+}

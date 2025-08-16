@@ -1,50 +1,136 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>相册</title>
-    <style>
-        body { font-family: sans-serif; background: #fafafa; margin: 0; padding: 1rem; }
-        h2 { margin-top: 2rem; border-left: 4px solid #1976d2; padding-left: 0.5rem; color: #333; }
-        .photos { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1rem; }
-        .photos img { width: 200px; height: auto; border-radius: 6px; cursor: pointer;
-                      box-shadow: 0 2px 6px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .photos img:hover { transform: scale(1.05); }
-
-        /* 弹出层样式 */
-        #lightbox {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); display: none;
-            align-items: center; justify-content: center;
-        }
-        #lightbox img { max-width: 90%; max-height: 90%; border-radius: 8px; }
-    </style>
+  <meta charset="utf-8">
+  <title>{{ title }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
-    <h1>📅 按日期查看照片</h1>
-    {% for date, files in photos.items() %}
-        <h2>{{ date }}</h2>
-        <div class="photos">
-            {% for file in files %}
-                <img src="{{ url_for('serve_photo', filename=file) }}" alt="photo"
-                     onclick="openLightbox(this.src)">
-            {% endfor %}
-        </div>
-    {% endfor %}
-
-    <!-- lightbox 弹出层 -->
-    <div id="lightbox" onclick="closeLightbox()">
-        <img id="lightbox-img" src="">
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="nav-left">
+      <!-- home == gallery route ('/') -->
+      <a class="nav-item" href="{{ url_for('gallery') }}">🏠 Home</a>
     </div>
+    <div class="nav-right">
+      <label for="month-picker" class="nav-item">Select Month:</label>
+      <input type="month" id="month-picker" onchange="goToMonth(this.value)">
+    </div>
+  </div>
 
-    <script>
-        function openLightbox(src) {
-            document.getElementById("lightbox-img").src = src;
-            document.getElementById("lightbox").style.display = "flex";
+  <h1 class="page-title">{{ title }}</h1>
+
+  <div class="days">
+    {% for date, info in photos.items() %}
+      {% set week_class = 'week-color-' ~ ((info.week % 6) + 1) %}
+      <section class="day {{ week_class }}" id="day-{{ date }}">
+        <!-- Left: Date & Week (sticky within unit) -->
+        <aside class="day-left">
+          <div class="status">
+            <div class="status-date">{{ date }}</div>
+            <div class="status-week">Week {{ info.week }}</div>
+          </div>
+        </aside>
+
+        <!-- Middle: Photos -->
+        <div class="day-middle">
+          <div class="photos">
+            {% for file in info.files %}
+              <img
+                src="{{ url_for('serve_photo', filename=file) }}"
+                alt="photo"
+                onclick="openLightbox('{{ url_for('serve_photo', filename=file) }}')"
+              >
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Right: Comment (sticky within unit) -->
+        <aside class="day-right">
+          <div class="comment-section">
+            <div class="comment-header">Comment</div>
+            <div class="preview" id="preview-{{ date }}"></div>
+            <textarea id="input-{{ date }}">{{ comments.get(date, '') }}</textarea>
+            <div class="comment-actions">
+              <button class="btn btn-ghost" id="edit-btn-{{ date }}" onclick="toggleEdit('{{ date }}')">Edit</button>
+              <button class="btn" id="save-btn-{{ date }}" onclick="saveComment('{{ date }}')" style="display:none;">Save</button>
+            </div>
+          </div>
+        </aside>
+      </section>
+    {% endfor %}
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="expanded">
+  </div>
+
+  <script>
+    // Setup previews on load
+    window.addEventListener('DOMContentLoaded', () => {
+      {% for date in photos.keys() %}
+        updatePreview("{{ date }}");
+        // ensure editors hidden initially (also hidden in CSS)
+        document.getElementById("input-{{ date }}").style.display = "none";
+      {% endfor %}
+    });
+
+    function updatePreview(date) {
+      const text = document.getElementById("input-" + date).value;
+      document.getElementById("preview-" + date).innerHTML = marked.parse(text || "");
+    }
+
+    function toggleEdit(date) {
+      const ta = document.getElementById("input-" + date);
+      const pv = document.getElementById("preview-" + date);
+      const editBtn = document.getElementById("edit-btn-" + date);
+      const saveBtn = document.getElementById("save-btn-" + date);
+      ta.style.display = "block";
+      pv.style.display = "none";
+      editBtn.style.display = "none";
+      saveBtn.style.display = "inline-block";
+      ta.focus();
+    }
+
+    function saveComment(date) {
+      const ta = document.getElementById("input-" + date);
+      fetch("/comment", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({date: date, text: ta.value})
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.success) {
+          updatePreview(date);
+          // back to preview mode
+          ta.style.display = "none";
+          document.getElementById("preview-" + date).style.display = "block";
+          document.getElementById("edit-btn-" + date).style.display = "inline-block";
+          document.getElementById("save-btn-" + date).style.display = "none";
+        } else {
+          alert("Save failed.");
         }
-        function closeLightbox() {
-            document.getElementById("lightbox").style.display = "none";
-        }
-    </script>
+      })
+      .catch(() => alert("Save failed."));
+    }
+
+    // Lightbox
+    function openLightbox(src) {
+      document.getElementById("lightbox-img").src = src;
+      document.getElementById("lightbox").style.display = "flex";
+    }
+    function closeLightbox() {
+      document.getElementById("lightbox").style.display = "none";
+      document.getElementById("lightbox-img").src = "";
+    }
+
+    // Month navigation
+    function goToMonth(month) {
+      if (month) window.location.href = "/month/" + month;
+    }
+  </script>
 </body>
 </html>
